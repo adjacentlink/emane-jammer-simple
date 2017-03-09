@@ -1,0 +1,155 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2016-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+from emanesh.ota import OTAPublisher, OTAMessage
+from argparse import ArgumentParser
+import time
+import random
+
+description='''This is a simple jamming utility for the EMANE emulator.
+
+Jammer applies a continuous tone on a set of frequencies at a
+specified power level and duration. Emulator physical layer instances
+require valid propagation model inputs (pathloss or location depending
+on propagation model) for the specified jammer source NEM id in order
+to process jammer generated OTA messages.'''
+
+epilog='''
+Example usage:
+emane-jammer-simple 65534 \
+                    2412000 \
+                    2417000 \
+                    2422000 \
+                    2427000''' 
+
+argumentParser = ArgumentParser(description=description,
+                                epilog=epilog)
+
+argumentParser.add_argument('-p',
+                            '--port',
+                            type=int,
+                            dest='port',
+                            default=45702,
+                            help='OTA channel listen port [default: %(default)s]')
+
+argumentParser.add_argument('-g',
+                            '--group',
+                            type=str,
+                            dest='group',
+                            default='224.1.2.8',
+                            help='OTA channel multicast group [default: %(default)s]')
+
+argumentParser.add_argument('-i',
+                            '--device',
+                            action='store',
+                            type=str,
+                            dest='device',
+                            help='OTA channel multicast device.')
+
+argumentParser.add_argument('-d',
+                            '--duration',
+                            type=int,
+                            dest='duration',
+                            metavar='SECONDS',
+                            default=0,
+                            help='length in seconds to jam. 0 to indicate forever. [default: %(default)s]')
+
+argumentParser.add_argument('--power',
+                            type=int,
+                            dest='power',
+                            default=0,
+                            help='jammer power in dBm. [default: %(default)s]')
+
+argumentParser.add_argument('--bandwidth',
+                            type=int,
+                            dest='bandwidth',
+                            default=20000000,
+                            help='OTA channel listen port [default: %(default)s]')
+
+argumentParser.add_argument('-v',
+                            '--verbose',
+                            action='store_true',
+                            dest='verbose',
+                            help='enable verbose output [default: %(default)s]')
+
+argumentParser.add_argument('nem',
+                            type=int,
+                            help='NEM id of transmitter.')
+
+
+argumentParser.add_argument('frequency',
+                            nargs='+',
+                            type=int,
+                            help='frequency to jam in Hz.')
+
+ns = argumentParser.parse_args()
+
+args = vars(ns)
+
+# create an OTA Publisher instance
+publisher = OTAPublisher((args['group'],
+                          args['port'],
+                          args['device']),)
+
+msg = OTAMessage(args['nem'], # src
+                 65535, # destination
+                 65535, # registration id
+                 65535, # sub id
+                 args['bandwidth'], # bandwidth
+                 [(args['nem'],args['power'])],
+                 [(freq,0,1000000) for freq in args['frequency']],
+                 0)
+
+count = 0
+
+while args['duration'] == 0 or count != args['duration']:
+    # By default the maximum duration of an OTA message is 1
+    # second. This means you only need to send N OTA messages to
+    # create a continuous tone for N seconds. Where each OTA message
+    # will be 1 second after the preceding one.
+    #
+    # In reality each OTA messages should overlap the preceding one to
+    # make sure there is not a gap in transmission. This is possible
+    # because the emulator physical layer will not add energy into the
+    # same spectrum window bin more than once per transmitting NEM, so
+    # overlapping will not increase the energy level.
+    #
+    if args['verbose']:
+        print 'jamming: %s' % ', '.join([str(x) for x in args['frequency']])
+
+    # publish the OTA message (msg) with a start of transmission time
+    # of now
+    publisher.publish(msg,int(time.time() * 1000000))
+
+    count += 1
+
+    time.sleep(1)

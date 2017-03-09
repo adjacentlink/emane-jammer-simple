@@ -1,0 +1,21 @@
+<otapublisherscenario>
+  <flow registrationid='65535' 
+        subid='65535' 
+        rate='20' 
+        start='0' 
+        end='6000'
+        source='11' 
+        destination='65535' 
+        bandwidth='20000000' 
+        fixedgain='0'>
+    <segments>
+      <segment frequency='2347000000'
+               offset='0'
+               duration='100000'/>
+    </segments>
+    <transmitters>
+      <transmitter nem='11'
+                   power='0'/>
+    </transmitters>
+  </flow>
+</otapublisherscenario>
