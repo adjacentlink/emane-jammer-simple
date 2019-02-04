@@ -88,7 +88,7 @@ argumentParser.add_argument('-d',
                             help='length in seconds to jam. 0 to indicate forever. [default: %(default)s]')
 
 argumentParser.add_argument('--power',
-                            type=int,
+                            type=float,
                             dest='power',
                             default=0,
                             help='jammer power in dBm. [default: %(default)s]')
