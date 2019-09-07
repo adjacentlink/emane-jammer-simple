@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+from __future__ import absolute_import, division, print_function
+
 try:
     from emane.ota import OTAPublisher, OTAMessage
 except:
@@ -148,7 +150,7 @@ while args['duration'] == 0 or count != args['duration']:
     # overlapping will not increase the energy level.
     #
     if args['verbose']:
-        print 'jamming: %s' % ', '.join([str(x) for x in args['frequency']])
+        print('jamming: %s'.format(', '.join([str(x) for x in args['frequency']])))
 
     # publish the OTA message (msg) with a start of transmission time
     # of now
