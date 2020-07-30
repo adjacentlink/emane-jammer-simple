@@ -150,7 +150,7 @@ while args['duration'] == 0 or count != args['duration']:
     # overlapping will not increase the energy level.
     #
     if args['verbose']:
-        print('jamming: %s'.format(', '.join([str(x) for x in args['frequency']])))
+        print('jamming: {}'.format(', '.join([str(x) for x in args['frequency']])))
 
     # publish the OTA message (msg) with a start of transmission time
     # of now
