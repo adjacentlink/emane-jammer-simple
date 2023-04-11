@@ -1,0 +1,17 @@
+from setuptools import setup
+
+setup(name='emane-jammer-simple',
+      version='@VERSION@',
+      description='EMANE Jammer Simple',
+      long_description='EMANE Jammer Simple',
+      author='Adjacent Link',
+      author_email='emane at adjacent link dot com',
+      url="https://github.com/adjacentlink/emane-jammer-simple",
+      packages=['emane_jammer_simple',
+                'emane_jammer_simple.service'],
+      package_data={'emane_jammer_simple.service' : ['schema/*.xsd']},
+      scripts=['scripts/emane-jammer-simple',
+               'scripts/emane-jammer-simple-service',
+               'scripts/emane-jammer-simple-control'],
+      license = 'BSD'
+      )

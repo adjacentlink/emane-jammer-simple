@@ -1,0 +1,37 @@
+<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'>
+  <xs:element name='emane-jammer-simple-service'>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name='ota-channel'>
+          <xs:complexType>
+            <xs:attribute name='group'
+                          type='xs:string'
+                          use='required'/>
+            <xs:attribute name='port'
+                          type='xs:unsignedShort'
+                          use='required'/>
+            <xs:attribute name='device'
+                          type='xs:string'
+                          use='required'/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name='ota-message'>
+          <xs:complexType>
+            <xs:attribute name='destination'
+                          type='xs:unsignedShort'
+                          use='required'/>
+            <xs:attribute name='registration-id'
+                          type='xs:unsignedShort'
+                          use='required'/>
+            <xs:attribute name='sub-id'
+                          type='xs:unsignedShort'
+                          use='required'/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+       <xs:attribute name='endpoint'
+                     type='xs:string'
+                     use='required'/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

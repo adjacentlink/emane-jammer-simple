@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+export DH_OPTIONS
+
+PYTHON3_DEPENDS = -Vpython3:Depends="python3:any (>= 3.0), python3-zmq, python3-setuptools, python3-protobuf, python3-waveform-resource, python3-emane"
+PYTHON3_VERSION:=$(shell python3 2>&1 --version | awk '{split($$2,v,"."); printf("%d.%d",v[1],v[2]);}')
+
+override_dh_auto_install:
+	dh_auto_install -- PYTHON=python3
+
+override_dh_gencontrol:
+	dh_gencontrol -- $(PYTHON3_DEPENDS)
+
+override_dh_python3:
+	dh_python3 --shebang=/usr/bin/python3
+
+%:
+	dh $@ --with python3

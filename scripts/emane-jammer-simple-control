@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+# Copyright (c) 2023 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in
+#    the documentation and/or other materials provided with the
+#    distribution.
+#  * Neither the name of Adjacent Link LLC nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# See toplevel COPYING for more information.
+#
+
+from argparse import ArgumentParser
+import re
+import sys
+import zmq
+import emane_jammer_simple.service.emane_jammer_simple_pb2 as emane_jammer_simple_pb2
+
+argument_parser = ArgumentParser()
+
+argument_parser.add_argument('endpoint',
+                             type=str,
+                             help='<hostname>:port | <IPv4>:port | [<IPv6>]:port')
+
+argument_parser.add_argument('-v',
+                             '--verbose',
+                             action='store_true',
+                             help='verbose output mode [default: %(default)s]')
+
+subparsers = argument_parser.add_subparsers(help='sub-command help')
+
+on_subparser =subparsers.add_parser('on',
+                                    help='enable/modify emane-simple-jammer-service modulation')
+
+on_subparser.add_argument('nem-id',
+                          type=int,
+                          help='nem id of jammer')
+
+on_subparser.add_argument('frequency',
+                          type=str,
+                          nargs='+',
+                          help='one or more frequency to modulate on: <frequenecy hz>[,<power dBm>]')
+
+on_subparser.add_argument('-a',
+                          '--antenna',
+                          type=str,
+                          default='omni:0',
+                          help='transmit antenna definition: \'omni\'[,<gain dBi>]|\'profile\') [default: %(default)s]')
+
+on_subparser.add_argument('-m',
+                          '--spectral-mask-index',
+                          type=int,
+                          default=0,
+                          help='spectral mask index [default: %(default)s]')
+
+on_subparser.add_argument('-p',
+                          '--power',
+                          type=float,
+                          default=0,
+                          help='transmit power dBm  [default: %(default)s]')
+
+on_subparser.add_argument('-t',
+                          '--period',
+                          type=int,
+                          default=1000000,
+                          help='period of mudulation in microseconds in range [0,1000000] [default: %(default)s]')
+
+on_subparser.add_argument('-d',
+                          '--duty-cycle',
+                          type=int,
+                          default=100,
+                          help='duty cycle of mudulation in percent in range [0,100] [default: %(default)s]')
+
+on_subparser.add_argument('-b',
+                          '--bandwidth',
+                          type=int,
+                          default=20000000,
+                          help='transmit bandwidth [default: %(default)s]')
+
+
+on_subparser.set_defaults(subcommand='on')
+
+off_subparser =subparsers.add_parser('off',
+                                    help='disable emane-simple-jammer-service modulation')
+
+off_subparser.set_defaults(subcommand='off')
+
+ns = argument_parser.parse_args()
+
+args = vars(ns)
+
+if 'subcommand' not in args:
+    print('missing subcommand: See `emane-jammer-simple-control -h` for more information.',
+          file=sys.stderr)
+    exit(1)
+
+request = emane_jammer_simple_pb2.Request()
+
+if args['subcommand'] == 'on':
+    request.type = emane_jammer_simple_pb2.Request.COMMAND_ON
+
+    for frequency in args['frequency']:
+        m = re.match(r'^(\d+)(,(-{0,1}\d+(\.\d+){0,1})){0,1}$',frequency)
+
+        if m:
+            hz =  int(m.group(1))
+            dBm =  m.group(3)
+
+            if not dBm:
+                dBm = args['power']
+            else:
+                dBm = float(dBm)
+
+            entry = request.on.Frequency()
+            entry.frequency_hz = hz
+            entry.power_dBm = dBm
+            entry = request.on.frequencies.append(entry)
+
+        else:
+            print('malformed frequency entry: {}'.format(frequency),
+                  file=sys.stderr)
+            exit(1)
+
+
+    m = re.match(r'^((omni)(,(-{0,1}\d+(\.\d+){0,1})){0,1}|(profile))$',args['antenna'])
+
+    if m:
+        antenna_type = m.group(2)
+
+        if antenna_type == 'omni':
+            dBi = m.group(4)
+
+            if not dBi:
+                dBi = 0
+            else:
+                dBi = float(dBi)
+
+            request.on.antenna.type = request.on.antenna.ANTENNA_IDEAL_OMNI
+            request.on.antenna.fixed_gain_dBi = dBi
+        else:
+            request.on.antenna.type = request.on.antenna.ANTENNA_PROFILE_DEFINED
+    else:
+        print('malformed antenna definition: {}'.format(args['antenna']),
+              file=sys.stderr)
+        exit(1)
+
+    if args['spectral_mask_index'] < 0:
+        print('bad spectral mask index: {}'.format(args['spectral_mask_index']),
+              file=sys.stderr)
+        exit(1)
+    else:
+        request.on.spectral_mask_index = args['spectral_mask_index']
+
+    if args['period'] < 0 or  args['period'] > 1000000:
+        print('out of range period: {}'.format(args['period']),
+              file=sys.stderr)
+        exit(1)
+    else:
+        request.on.period_microseconds = args['period']
+
+    if args['duty_cycle'] < 0 or  args['duty_cycle'] > 100:
+        print('out of range duty cycle: {}'.format(args['duty_cycle']),
+              file=sys.stderr)
+        exit(1)
+    else:
+        request.on.duty_cycle_percent = args['duty_cycle']
+
+    if args['nem-id'] < 1 or args['nem-id'] > 65534:
+        print('bad nemd-id: {}'.format(args['nem-id']),
+              file=sys.stderr)
+        exit(1)
+    else:
+        request.on.nem_id = args['nem-id']
+
+    if args['bandwidth'] < 0:
+        print('bad nemd-id: {}'.format(args['bandwidth']),
+              file=sys.stderr)
+        exit(1)
+    else:
+        request.on.bandwidth_hz = args['bandwidth']
+
+else:
+    request.type = emane_jammer_simple_pb2.Request.COMMAND_OFF
+
+context = zmq.Context()
+
+client = context.socket(zmq.REQ)
+
+client.setsockopt(zmq.IPV4ONLY,0)
+
+client.connect("tcp://%s" % args['endpoint'])
+
+client.send(request.SerializeToString())
+
+msg = client.recv()
+
+response = emane_jammer_simple_pb2.Response()
+
+response.ParseFromString(msg)
+
+if response.success:
+    exit(0)
+else:
+    print('command error: {}'.format(response.description),
+          file=sys.stderr)
+    exit(1)
