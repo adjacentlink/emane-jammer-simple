@@ -167,7 +167,7 @@ class Plugin(BasePlugin):
                         self._ota_period_seconds = .8
                     else:
                         self._ota_on_duration_microseconds = int(m.on.period_microseconds *  (m.on.duty_cycle_percent / 100.0))
-                        self._ota_period_seconds = m.on.period_microseconds // 1000000
+                        self._ota_period_seconds = m.on.period_microseconds / 1000000
 
                     logging.info('on duration: {}'.format(self._ota_on_duration_microseconds))
                     logging.info('period: {}'.format(self._ota_period_seconds))
@@ -233,9 +233,9 @@ class Plugin(BasePlugin):
 
             f()
 
-            logging.info('ota publish at {} next publish at {} for {}'.format(now,
-                                                                              now + self._ota_period_seconds,
-                                                                              current_request_sequence))
+            logging.debug('ota publish at {} next publish at {} for {}'.format(now,
+                                                                               now + self._ota_period_seconds,
+                                                                               current_request_sequence))
         else:
             logging.info('ota publish was scheduled for request {} but now request {}, skipping'.format(current_request_sequence,
                                                                                                         self._request_sequence))
