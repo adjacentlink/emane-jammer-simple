@@ -32,4 +32,4 @@
 # See toplevel COPYING for more information.
 #
 
-waveform-resourced emane_jammer_simple.service.Plugin $@
+waveform-resourced emane_jammer_simple.service.plugin.Plugin $@

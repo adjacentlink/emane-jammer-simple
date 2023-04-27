@@ -6,8 +6,8 @@ Build-Depends: debhelper (>= 8.0.0), dh-python
 Standards-Version: 3.9.3
 Homepage: https://github.com/adjacentlink/emane-jammer-simple
 
-Package: emane-jammer-simple
+Package: python3-emane-jammer-simple
 Section: python
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends}
-Description: Waveform Resource Application Framework
+Description: Simple EMANE Jammer

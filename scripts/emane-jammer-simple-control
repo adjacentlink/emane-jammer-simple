@@ -66,7 +66,7 @@ on_subparser.add_argument('frequency',
 on_subparser.add_argument('-a',
                           '--antenna',
                           type=str,
-                          default='omni:0',
+                          default='omni,0',
                           help='transmit antenna definition: \'omni\'[,<gain dBi>]|\'profile\') [default: %(default)s]')
 
 on_subparser.add_argument('-m',
@@ -133,10 +133,9 @@ if args['subcommand'] == 'on':
             else:
                 dBm = float(dBm)
 
-            entry = request.on.Frequency()
+            entry = request.on.frequencies.add()
             entry.frequency_hz = hz
             entry.power_dBm = dBm
-            entry = request.on.frequencies.append(entry)
 
         else:
             print('malformed frequency entry: {}'.format(frequency),
