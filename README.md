@@ -189,7 +189,8 @@ OTA Messages are instantiated with the following parameters:
 
     3. Duration of segment in microseconds.
 
-8. `fixedAntennaGain`: Fixed antenna gain in dBi or `None` for antenna profiles.
+8. `fixedAntennaGain`: Fixed antenna gain in dBi or `None` for antenna
+   profiles.
 
 ```python
 msg = OTAMessage(args['nem'], # src
@@ -227,15 +228,99 @@ information for any jamming publisher (NEM ids used for transmitters)
 participating in the emulation, based on physical layer propagation
 model selection.
 
+# Simple Jammer Service
+
+The `emane-jammer-simple-service` is a simple
+[waveform-resource][waveformresource] service which uses a
+[ZeroMQ][zeromq] request-reply pattern to control a jamming source.
+
+`emane-jammer-simple-service` uses an XML configuration file to
+specify service listen endpoint and emane OTA channel and message
+parameters:
+
+```xml
+    <emane-jammer-simple-service endpoint='0.0.0.0:45715'>
+      <ota-channel group='224.1.2.8'
+                   port='45702'
+                   device='backchan0'/>
+      <ota-message destination='65535'
+                   registration-id='65535'
+                   sub-id='65535'/>
+    </emane-jammer-simple-service>
+```
+
+Where,
+
+1. `endpoint`: service listen endpoint
+
+2. `ota-channel`: Configuration for the EMANE OTA channel
+
+    1. `group`: OTA multicast group. See
+       [otamanagergroup](https://github.com/adjacentlink/emane/wiki/Configuring-the-Emulator#otamanagergroup).
+  
+    2. `port`: OTA multicast port. See
+       [otamanagergroup](https://github.com/adjacentlink/emane/wiki/Configuring-the-Emulator#otamanagergroup).
+  
+    3. `device`: See
+       [otamanagerdevice](https://github.com/adjacentlink/emane/wiki/Configuring-the-Emulator#otamanagerdevice)
+  
+3. `ota-message`: Configuration for static message fields when
+   publishing OTA messages
+
+    1. `destination`: Destination of the OTA message. For most cases
+       use broadcast 65535.
+  
+    2. `registration-id`: Registration id of the OTA physical
+       layer. For most cases used 65535.
+  
+    3. `sub-id`: See
+       [subid](https://github.com/adjacentlink/emane/wiki/Physical-Layer-Model#subid).
+
+
+Sample `emane-jammer-simple-service` usage:
+
+```
+$ emane-jammer-simple-service \
+   --config-file emane-jammer-simple-service.xml \
+   --log-file /path/to/emane-jammer-simple-service.log \
+   --pid-file /path/to/emane-jammer-simple-service.pid \
+   --daemonize
+```
+
+`emane-jammer-simple-service` [request and response messages][api] are
+defined using [Google Protocol Buffers][protobuf] and the
+`emane-jammer-simple-control` script servers as an example for using
+the API.
+
+Sample `emane-jammer-simple-control` client usage:
+
+```
+$ emane-jammer-simple-control \
+   jammer-node:45715 \
+   on \
+   4 \
+   2360000000,5 \
+   2460000000,5 \
+   2410000000,5 \
+   -a omni
+
+$ emane-jammer-simple-control jammer-node:45715 off
+```
+
 # Need more information?
 
 Visit the EMANE Wiki:
 
  https://github.com/adjacentlink/emane/wiki
 
-Join the EMANE mailing list and post a question:
-
- http://pf.itd.nrl.navy.mil/mailman/listinfo/emane-users
-
 [commonphyheader]: https://github.com/adjacentlink/emane/blob/master/src/libemane/commonphyheader.proto
+
 [otapublihserschema]: https://github.com/adjacentlink/emane/blob/master/src/emanesh/emanesh/schema/otapublisherscenario.xsd
+
+[zeromq]: https://zeromq.org 
+
+[waveformresource]: https://github.com/adjacentlink/waveform-resource
+
+[protobuf]: https://protobuf.dev/
+
+[api]: https://github.com/adjacentlink/emane-jammer-simple/blob/develop/emane_jammer_simple/service/emane-jammer-simple.proto

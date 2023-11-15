@@ -1,3 +1,31 @@
-MANIFEST
+# autotools
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache
+config.log
+config.status
+configure
+install-sh
+missing
+
+# protocol buffers output
+*_pb2.py
+
+# python byte code
+*.pyc
+
+# dist
+emane-jammer-simple-*.tar.gz
+
+# python
 build
 dist
+setup.py
+
+# rpm
+emane-jammer-simple.spec
+.rpmbuild
+
+# deb
+.debbuild

@@ -1,0 +1,56 @@
+%define source_date_epoch_from_changelog 0
+
+Summary: EMANE Jammer Simple
+Name: emane-jammer-simple
+Version: @VERSION@
+Release: 1%{?dist}
+License: BSD
+Group: Development/Libraries
+URL: https://github.com/adjacentlink/emane-jammer-simple
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+Vendor: Adjacent Link LLC
+BuildArch: noarch
+
+%global _description \
+EMANE Jammer Simple
+
+%description %{_description}
+EMANE Jammer Simple
+
+%package -n python3-%{name}
+Summary: %{summary}
+BuildRequires: python3-devel
+Requires: python3-zmq
+Requires: python3-setuptools
+Requires: python3-protobuf
+Requires: python3-waveform-resource
+Requires: python3-emane
+%{?python_provide:%python_provide python3-%{name}}
+%description -n python3-%{name} %{_description}
+
+%prep
+%setup -q
+
+%build
+%configure
+make
+
+%install
+make DESTDIR=${RPM_BUILD_ROOT} PYTHON=%{__python3} install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post
+
+%postun
+
+%files -n python3-%{name}
+%defattr(-,root,root,-)
+%{_bindir}/emane-jammer-simple
+%{_bindir}/emane-jammer-simple-control
+%{_bindir}/emane-jammer-simple-service
+%{python3_sitelib}/
+%doc COPYING
+
