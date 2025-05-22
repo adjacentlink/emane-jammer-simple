@@ -4,7 +4,7 @@ RUN mkdir -p /opt/built
 
 RUN dnf -y update
 RUN dnf -y install epel-release dnf-plugins-core
-RUN dnf config-manager --set-enabled powertools
+RUN dnf config-manager --enable crb
 RUN dnf clean all
 
 # Copy and install packages from the latest upsteam dependencies

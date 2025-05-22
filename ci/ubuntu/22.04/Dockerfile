@@ -16,8 +16,8 @@ COPY --from=gcr.io/automated-builds-303920/ubuntu22.04.waveform-resource /opt/bu
 RUN dpkg -i dependencies/*; apt-get -y -f install
 
 # Build tools and dependencies
-RUN apt-get -y install git gcc g++ autoconf automake libtool dh-python  debhelper python3-setuptools \
-                       build-essentiao protobuf-compile
+RUN apt-get -y install git gcc g++ autoconf automake libtool dh-python debhelper python3-setuptools \
+                       build-essential protobuf-compile
 
 RUN git clone https://github.com/adjacentlink/emane-jammer-simple -b develop
 
