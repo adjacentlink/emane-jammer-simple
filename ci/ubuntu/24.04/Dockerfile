@@ -17,7 +17,7 @@ RUN dpkg -i dependencies/*; apt-get -y -f install
 
 # Build tools and dependencies
 RUN apt-get -y install git gcc g++ autoconf automake libtool dh-python debhelper python3-setuptools \
-                       build-essential protobuf-compile
+                       build-essential protobuf-compiler
 
 RUN git clone https://github.com/adjacentlink/emane-jammer-simple -b develop
 
