@@ -38,6 +38,7 @@ make
 
 %install
 make DESTDIR=${RPM_BUILD_ROOT} PYTHON=%{__python3} install
+%py3_shebang_fix %{buildroot}%{_bindir}/*
 
 %clean
 rm -rf $RPM_BUILD_ROOT
